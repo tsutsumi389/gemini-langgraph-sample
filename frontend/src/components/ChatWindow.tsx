@@ -1,5 +1,5 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageBubble } from "@/components/MessageBubble";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import type { StreamStatus } from "@/types/agent";
 
 type Props = {
@@ -20,17 +20,15 @@ export function ChatWindow({ question, answer, status, error }: Props) {
             質問を入力してエージェントに問い合わせてください。
           </p>
         )}
-        {question && <MessageBubble role="user">{question}</MessageBubble>}
+        {question && <MessageBubble>{question}</MessageBubble>}
         {status === "streaming" && (
-          <MessageBubble role="assistant">
+          <MessageBubble>
             <span className="text-muted-foreground">考え中...</span>
           </MessageBubble>
         )}
-        {answer && status !== "streaming" && (
-          <MessageBubble role="assistant">{answer}</MessageBubble>
-        )}
+        {answer && status !== "streaming" && <MessageBubble>{answer}</MessageBubble>}
         {status === "error" && error && (
-          <MessageBubble role="assistant">
+          <MessageBubble>
             <span className="text-destructive">エラー: {error}</span>
           </MessageBubble>
         )}

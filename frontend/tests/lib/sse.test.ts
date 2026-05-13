@@ -3,17 +3,14 @@ import { parseSSEChunk } from "@/lib/sse";
 
 describe("parseSSEChunk", () => {
   it("parses a complete event with event and data lines", () => {
-    const buf = "event: graph_start\ndata: {\"question\":\"hi\"}\n\n";
+    const buf = 'event: graph_start\ndata: {"question":"hi"}\n\n';
     const { events, rest } = parseSSEChunk(buf);
-    expect(events).toEqual([
-      { event: "graph_start", data: '{"question":"hi"}' },
-    ]);
+    expect(events).toEqual([{ event: "graph_start", data: '{"question":"hi"}' }]);
     expect(rest).toBe("");
   });
 
   it("parses multiple events in a single buffer", () => {
-    const buf =
-      "event: a\ndata: 1\n\nevent: b\ndata: 2\n\n";
+    const buf = "event: a\ndata: 1\n\nevent: b\ndata: 2\n\n";
     const { events, rest } = parseSSEChunk(buf);
     expect(events.map((e) => e.event)).toEqual(["a", "b"]);
     expect(events.map((e) => e.data)).toEqual(["1", "2"]);

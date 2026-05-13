@@ -25,9 +25,7 @@ describe("AgentTrace", () => {
   });
 
   it("marks the last step as active while streaming", () => {
-    const trace: TraceItem[] = [
-      { node: "research", update: { iteration: "1" } },
-    ];
+    const trace: TraceItem[] = [{ node: "research", update: { iteration: "1" } }];
     render(<AgentTrace trace={trace} status="streaming" />);
     const items = screen.getAllByTestId("trace-item");
     expect(items[items.length - 1].dataset.active).toBe("true");

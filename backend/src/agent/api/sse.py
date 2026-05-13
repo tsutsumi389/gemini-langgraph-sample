@@ -8,7 +8,7 @@ from typing import Any
 from fastapi import Request
 from langgraph.graph.state import CompiledStateGraph
 
-from agent.graph.state import OverallState, initial_state
+from agent.graph.state import initial_state
 
 log = logging.getLogger(__name__)
 
@@ -27,15 +27,12 @@ async def stream_graph_events(
     """Yield sse-starlette compatible event dicts."""
     yield {"event": "graph_start", "data": json.dumps({"question": question})}
 
-    final_state: OverallState | None = None
+    answer = ""
     try:
-        async for chunk in graph.astream(
-            initial_state(question), stream_mode="updates"
-        ):
+        async for chunk in graph.astream(initial_state(question), stream_mode="updates"):
             if await request.is_disconnected():
                 log.info("client disconnected; stopping stream")
                 return
-            # chunk: {node_name: partial_state_update}
             for node_name, update in chunk.items():
                 yield {
                     "event": "node_update",
@@ -47,7 +44,8 @@ async def stream_graph_events(
                         ensure_ascii=False,
                     ),
                 }
-                final_state = {**(final_state or {}), **update}  # type: ignore[typeddict-item]
+                if "answer" in update:
+                    answer = update["answer"]
     except Exception as exc:
         log.exception("graph stream failed")
         yield {
@@ -56,7 +54,6 @@ async def stream_graph_events(
         }
         return
 
-    answer = (final_state or {}).get("answer", "")
     yield {
         "event": "final",
         "data": json.dumps({"answer": answer}, ensure_ascii=False),

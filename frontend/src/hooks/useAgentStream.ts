@@ -142,7 +142,7 @@ export function useAgentStream(): UseAgentStreamResult {
       // flush remaining buffer
       const tail = buffer + decoder.decode();
       if (tail.trim()) {
-        const { events } = parseSSEChunk(tail + "\n\n");
+        const { events } = parseSSEChunk(`${tail}\n\n`);
         for (const e of events) {
           const parsed = decodeEvent(e.event, e.data);
           if (parsed) dispatch({ type: "event", event: parsed });

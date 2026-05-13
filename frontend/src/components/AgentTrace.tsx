@@ -19,9 +19,7 @@ export function AgentTrace({ trace, status }: Props) {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          Agent trace
-        </CardTitle>
+        <CardTitle className="text-sm font-medium text-muted-foreground">Agent trace</CardTitle>
       </CardHeader>
       <CardContent>
         <ol className="flex flex-col gap-2">
@@ -30,6 +28,7 @@ export function AgentTrace({ trace, status }: Props) {
             const active = isLast && status === "streaming";
             return (
               <li
+                // biome-ignore lint/suspicious/noArrayIndexKey: trace は SSE 受信順の追記専用リストで並び替えなし
                 key={idx}
                 data-testid="trace-item"
                 data-active={active ? "true" : "false"}
