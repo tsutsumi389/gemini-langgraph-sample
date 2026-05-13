@@ -20,15 +20,17 @@ export function ChatWindow({ question, answer, status, error }: Props) {
             質問を入力してエージェントに問い合わせてください。
           </p>
         )}
-        {question && <MessageBubble>{question}</MessageBubble>}
+        {question && <MessageBubble from="user">{question}</MessageBubble>}
         {status === "streaming" && (
-          <MessageBubble>
+          <MessageBubble from="assistant">
             <span className="text-muted-foreground">考え中...</span>
           </MessageBubble>
         )}
-        {answer && status !== "streaming" && <MessageBubble>{answer}</MessageBubble>}
+        {answer && status !== "streaming" && (
+          <MessageBubble from="assistant">{answer}</MessageBubble>
+        )}
         {status === "error" && error && (
-          <MessageBubble>
+          <MessageBubble from="assistant">
             <span className="text-destructive">エラー: {error}</span>
           </MessageBubble>
         )}
