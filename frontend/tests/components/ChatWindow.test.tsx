@@ -9,34 +9,19 @@ describe("ChatWindow", () => {
   });
 
   it("renders the question and a streaming indicator while streaming", () => {
-    render(
-      <ChatWindow question="hello?" answer="" status="streaming" />,
-    );
+    render(<ChatWindow question="hello?" answer="" status="streaming" />);
     expect(screen.getByText("hello?")).toBeInTheDocument();
     expect(screen.getByText(/考え中/i)).toBeInTheDocument();
   });
 
   it("renders the answer when done", () => {
-    render(
-      <ChatWindow
-        question="capital of france?"
-        answer="Paris."
-        status="done"
-      />,
-    );
+    render(<ChatWindow question="capital of france?" answer="Paris." status="done" />);
     expect(screen.getByText("capital of france?")).toBeInTheDocument();
     expect(screen.getByText("Paris.")).toBeInTheDocument();
   });
 
   it("renders an error message when status is error", () => {
-    render(
-      <ChatWindow
-        question="x"
-        answer=""
-        status="error"
-        error="boom"
-      />,
-    );
+    render(<ChatWindow question="x" answer="" status="error" error="boom" />);
     expect(screen.getByText(/boom/)).toBeInTheDocument();
   });
 });
