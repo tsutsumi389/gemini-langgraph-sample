@@ -3,7 +3,7 @@
 import { useCallback, useReducer, useRef } from "react";
 import { chatEndpoint } from "@/lib/api";
 import { parseSSEChunk } from "@/lib/sse";
-import type { ChatEvent, StreamState, TraceItem } from "@/types/agent";
+import type { ChatEvent, StreamState } from "@/types/agent";
 
 type Action =
   | { type: "start"; question: string }
@@ -48,7 +48,7 @@ function applyEvent(state: StreamState, ev: ChatEvent): StreamState {
     case "graph_start":
       return { ...state, question: ev.payload.question };
     case "node_update":
-      return { ...state, trace: [...state.trace, ev.payload as TraceItem] };
+      return { ...state, trace: [...state.trace, ev.payload] };
     case "final":
       return { ...state, answer: ev.payload.answer };
     case "error":

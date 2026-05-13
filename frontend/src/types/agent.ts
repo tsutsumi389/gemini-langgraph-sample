@@ -1,7 +1,5 @@
-export type NodeName = "research" | "reflection" | "answer";
-
 export type TraceItem = {
-  node: NodeName | string;
+  node: string;
   update: Record<string, string>;
 };
 
