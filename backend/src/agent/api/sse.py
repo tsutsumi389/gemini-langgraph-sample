@@ -48,7 +48,7 @@ async def stream_graph_events(
                     ),
                 }
                 final_state = {**(final_state or {}), **update}  # type: ignore[typeddict-item]
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         log.exception("graph stream failed")
         yield {
             "event": "error",
