@@ -128,3 +128,99 @@
     @apply font-sans;
   }
 }
+
+/* ── highlight.js minimal theme (light + dark via CSS vars) ─────────────── */
+.hljs {
+  color: var(--foreground);
+  background: transparent;
+}
+.hljs-comment,
+.hljs-quote {
+  color: oklch(0.55 0.01 250);
+  font-style: italic;
+}
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-section,
+.hljs-name,
+.hljs-tag {
+  color: oklch(0.45 0.18 320);
+  font-weight: 600;
+}
+.hljs-string,
+.hljs-attr,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-template-tag,
+.hljs-template-variable,
+.hljs-addition {
+  color: oklch(0.55 0.16 145);
+}
+.hljs-number,
+.hljs-literal,
+.hljs-meta {
+  color: oklch(0.55 0.18 50);
+}
+.hljs-title,
+.hljs-title.class_,
+.hljs-title.function_ {
+  color: oklch(0.5 0.16 250);
+  font-weight: 600;
+}
+.hljs-type,
+.hljs-built_in,
+.hljs-class .hljs-title {
+  color: oklch(0.5 0.14 200);
+}
+.hljs-variable,
+.hljs-attribute {
+  color: oklch(0.5 0.12 30);
+}
+.hljs-deletion {
+  color: oklch(0.55 0.18 25);
+}
+.hljs-emphasis {
+  font-style: italic;
+}
+.hljs-strong {
+  font-weight: 700;
+}
+
+.dark .hljs-comment,
+.dark .hljs-quote {
+  color: oklch(0.65 0.02 250);
+}
+.dark .hljs-keyword,
+.dark .hljs-selector-tag,
+.dark .hljs-section,
+.dark .hljs-name,
+.dark .hljs-tag {
+  color: oklch(0.78 0.18 320);
+}
+.dark .hljs-string,
+.dark .hljs-attr,
+.dark .hljs-symbol,
+.dark .hljs-bullet,
+.dark .hljs-template-tag,
+.dark .hljs-template-variable,
+.dark .hljs-addition {
+  color: oklch(0.8 0.16 145);
+}
+.dark .hljs-number,
+.dark .hljs-literal,
+.dark .hljs-meta {
+  color: oklch(0.8 0.16 60);
+}
+.dark .hljs-title,
+.dark .hljs-title.class_,
+.dark .hljs-title.function_ {
+  color: oklch(0.78 0.16 250);
+}
+.dark .hljs-type,
+.dark .hljs-built_in {
+  color: oklch(0.78 0.14 200);
+}
+.dark .hljs-variable,
+.dark .hljs-attribute {
+  color: oklch(0.78 0.12 30);
+}

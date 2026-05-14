@@ -5,12 +5,30 @@ export type TraceItem = {
 
 export type StreamStatus = "idle" | "streaming" | "done" | "error";
 
-export type StreamState = {
-  status: StreamStatus;
-  question: string;
+export type UserMessage = {
+  id: string;
+  role: "user";
+  content: string;
+  createdAt: number;
+};
+
+export type AssistantMessage = {
+  id: string;
+  role: "assistant";
+  content: string;
   trace: TraceItem[];
-  answer: string;
+  status: "streaming" | "done" | "error";
   error: string | null;
+  createdAt: number;
+  sourceQuestion: string;
+};
+
+export type ChatMessage = UserMessage | AssistantMessage;
+
+export type ChatState = {
+  messages: ChatMessage[];
+  activeAssistantId: string | null;
+  status: StreamStatus;
 };
 
 export type ChatEvent =

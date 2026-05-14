@@ -5,7 +5,7 @@ import type { TraceItem } from "@/types/agent";
 
 describe("AgentTrace", () => {
   it("renders nothing visible when trace is empty", () => {
-    const { container } = render(<AgentTrace trace={[]} status="idle" />);
+    const { container } = render(<AgentTrace trace={[]} />);
     expect(container.textContent ?? "").not.toMatch(/research|reflection|answer/i);
   });
 
@@ -15,7 +15,7 @@ describe("AgentTrace", () => {
       { node: "reflection", update: { needs_more_research: "false" } },
       { node: "answer", update: { answer: "Paris." } },
     ];
-    render(<AgentTrace trace={trace} status="done" />);
+    render(<AgentTrace trace={trace} />);
     const labels = screen.getAllByTestId("trace-node-label").map((el) => el.textContent);
     expect(labels).toEqual([
       expect.stringMatching(/research/i),
@@ -24,9 +24,9 @@ describe("AgentTrace", () => {
     ]);
   });
 
-  it("marks the last step as active while streaming", () => {
+  it("marks the last step as active when active prop is true", () => {
     const trace: TraceItem[] = [{ node: "research", update: { iteration: "1" } }];
-    render(<AgentTrace trace={trace} status="streaming" />);
+    render(<AgentTrace trace={trace} active />);
     const items = screen.getAllByTestId("trace-item");
     expect(items[items.length - 1].dataset.active).toBe("true");
   });
