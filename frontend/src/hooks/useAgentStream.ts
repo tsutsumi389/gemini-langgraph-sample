@@ -3,39 +3,105 @@
 import { useCallback, useReducer, useRef } from "react";
 import { chatEndpoint } from "@/lib/api";
 import { parseSSEChunk } from "@/lib/sse";
-import type { ChatEvent, StreamState } from "@/types/agent";
+import type { AssistantMessage, ChatEvent, ChatMessage, ChatState, TraceItem } from "@/types/agent";
 
 type Action =
-  | { type: "start"; question: string }
-  | { type: "event"; event: ChatEvent }
-  | { type: "finish" }
-  | { type: "fail"; message: string }
+  | { type: "start"; question: string; userId: string; assistantId: string }
+  | { type: "regenerate"; assistantId: string; question: string; replaceId: string }
+  | { type: "event"; assistantId: string; event: ChatEvent }
+  | { type: "finish"; assistantId: string }
+  | { type: "fail"; assistantId: string | null; message: string }
   | { type: "reset" };
 
-const initialState: StreamState = {
+const initialState: ChatState = {
+  messages: [],
+  activeAssistantId: null,
   status: "idle",
-  question: "",
-  trace: [],
-  answer: "",
-  error: null,
 };
 
-function reducer(state: StreamState, action: Action): StreamState {
+function newId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return Math.random().toString(36).slice(2);
+}
+
+function reducer(state: ChatState, action: Action): ChatState {
   switch (action.type) {
-    case "start":
-      return {
-        status: "streaming",
-        question: action.question,
-        trace: [],
-        answer: "",
-        error: null,
+    case "start": {
+      const now = Date.now();
+      const userMsg: ChatMessage = {
+        id: action.userId,
+        role: "user",
+        content: action.question,
+        createdAt: now,
       };
-    case "event":
-      return applyEvent(state, action.event);
+      const assistantMsg: AssistantMessage = {
+        id: action.assistantId,
+        role: "assistant",
+        content: "",
+        trace: [],
+        status: "streaming",
+        error: null,
+        createdAt: now,
+        sourceQuestion: action.question,
+      };
+      return {
+        messages: [...state.messages, userMsg, assistantMsg],
+        activeAssistantId: action.assistantId,
+        status: "streaming",
+      };
+    }
+    case "regenerate": {
+      const now = Date.now();
+      const assistantMsg: AssistantMessage = {
+        id: action.assistantId,
+        role: "assistant",
+        content: "",
+        trace: [],
+        status: "streaming",
+        error: null,
+        createdAt: now,
+        sourceQuestion: action.question,
+      };
+      const idx = state.messages.findIndex((m) => m.id === action.replaceId);
+      const next =
+        idx >= 0
+          ? [...state.messages.slice(0, idx), assistantMsg, ...state.messages.slice(idx + 1)]
+          : [...state.messages, assistantMsg];
+      return { messages: next, activeAssistantId: action.assistantId, status: "streaming" };
+    }
+    case "event": {
+      const messages = state.messages.map((m) =>
+        m.id === action.assistantId && m.role === "assistant"
+          ? applyEventToMessage(m, action.event)
+          : m,
+      );
+      const status = action.event.type === "error" ? "error" : state.status;
+      return { ...state, messages, status };
+    }
     case "finish":
-      return state.status === "error" ? state : { ...state, status: "done" };
+      return {
+        ...state,
+        status: state.status === "error" ? "error" : "done",
+        activeAssistantId: null,
+        messages: state.messages.map((m) =>
+          m.id === action.assistantId && m.role === "assistant" && m.status === "streaming"
+            ? { ...m, status: "done" }
+            : m,
+        ),
+      };
     case "fail":
-      return { ...state, status: "error", error: action.message };
+      return {
+        ...state,
+        status: "error",
+        activeAssistantId: null,
+        messages: state.messages.map((m) =>
+          action.assistantId && m.id === action.assistantId && m.role === "assistant"
+            ? { ...m, status: "error", error: action.message }
+            : m,
+        ),
+      };
     case "reset":
       return initialState;
     default:
@@ -43,18 +109,20 @@ function reducer(state: StreamState, action: Action): StreamState {
   }
 }
 
-function applyEvent(state: StreamState, ev: ChatEvent): StreamState {
+function applyEventToMessage(msg: AssistantMessage, ev: ChatEvent): AssistantMessage {
   switch (ev.type) {
     case "graph_start":
-      return { ...state, question: ev.payload.question };
-    case "node_update":
-      return { ...state, trace: [...state.trace, ev.payload] };
+      return msg;
+    case "node_update": {
+      const trace: TraceItem[] = [...msg.trace, ev.payload];
+      return { ...msg, trace };
+    }
     case "final":
-      return { ...state, answer: ev.payload.answer };
+      return { ...msg, content: ev.payload.answer };
     case "error":
-      return { ...state, status: "error", error: ev.payload.message };
+      return { ...msg, status: "error", error: ev.payload.message };
     default:
-      return state;
+      return msg;
   }
 }
 
@@ -75,15 +143,18 @@ function decodeEvent(event: string, data: string): ChatEvent | null {
   return null;
 }
 
-export type UseAgentStreamResult = StreamState & {
+export type UseChatResult = ChatState & {
   send: (question: string) => Promise<void>;
+  regenerate: (assistantId: string) => Promise<void>;
   abort: () => void;
   reset: () => void;
 };
 
-export function useAgentStream(): UseAgentStreamResult {
+export function useChat(): UseChatResult {
   const [state, dispatch] = useReducer(reducer, initialState);
   const abortRef = useRef<AbortController | null>(null);
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   const abort = useCallback(() => {
     abortRef.current?.abort();
@@ -95,12 +166,10 @@ export function useAgentStream(): UseAgentStreamResult {
     dispatch({ type: "reset" });
   }, [abort]);
 
-  const send = useCallback(async (question: string) => {
+  const runStream = useCallback(async (assistantId: string, question: string) => {
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
-
-    dispatch({ type: "start", question });
 
     let response: Response;
     try {
@@ -111,15 +180,21 @@ export function useAgentStream(): UseAgentStreamResult {
         signal: controller.signal,
       });
     } catch (e) {
+      if ((e as Error)?.name === "AbortError") return;
       dispatch({
         type: "fail",
+        assistantId,
         message: e instanceof Error ? e.message : "network error",
       });
       return;
     }
 
     if (!response.ok || !response.body) {
-      dispatch({ type: "fail", message: `request failed (${response.status})` });
+      dispatch({
+        type: "fail",
+        assistantId,
+        message: `request failed (${response.status})`,
+      });
       return;
     }
 
@@ -136,27 +211,87 @@ export function useAgentStream(): UseAgentStreamResult {
         buffer = rest;
         for (const e of events) {
           const parsed = decodeEvent(e.event, e.data);
-          if (parsed) dispatch({ type: "event", event: parsed });
+          if (parsed) dispatch({ type: "event", assistantId, event: parsed });
         }
       }
-      // flush remaining buffer
       const tail = buffer + decoder.decode();
       if (tail.trim()) {
         const { events } = parseSSEChunk(`${tail}\n\n`);
         for (const e of events) {
           const parsed = decodeEvent(e.event, e.data);
-          if (parsed) dispatch({ type: "event", event: parsed });
+          if (parsed) dispatch({ type: "event", assistantId, event: parsed });
         }
       }
-      dispatch({ type: "finish" });
+      dispatch({ type: "finish", assistantId });
     } catch (e) {
       if ((e as Error)?.name === "AbortError") return;
       dispatch({
         type: "fail",
+        assistantId,
         message: e instanceof Error ? e.message : "stream error",
       });
     }
   }, []);
 
-  return { ...state, send, abort, reset };
+  const send = useCallback(
+    async (question: string) => {
+      const trimmed = question.trim();
+      if (!trimmed) return;
+      const userId = newId();
+      const assistantId = newId();
+      dispatch({ type: "start", question: trimmed, userId, assistantId });
+      await runStream(assistantId, trimmed);
+    },
+    [runStream],
+  );
+
+  const regenerate = useCallback(
+    async (assistantId: string) => {
+      const target = stateRef.current.messages.find(
+        (m): m is AssistantMessage => m.id === assistantId && m.role === "assistant",
+      );
+      if (!target) return;
+      const newAssistantId = newId();
+      dispatch({
+        type: "regenerate",
+        assistantId: newAssistantId,
+        question: target.sourceQuestion,
+        replaceId: assistantId,
+      });
+      await runStream(newAssistantId, target.sourceQuestion);
+    },
+    [runStream],
+  );
+
+  return { ...state, send, regenerate, abort, reset };
+}
+
+// 後方互換: 既存テスト/利用者向けの薄いラッパ。多ターン状態を旧APIにフラット化して返す。
+export type UseAgentStreamResult = {
+  status: import("@/types/agent").StreamStatus;
+  question: string;
+  trace: TraceItem[];
+  answer: string;
+  error: string | null;
+  send: (question: string) => Promise<void>;
+  abort: () => void;
+  reset: () => void;
+};
+
+export function useAgentStream(): UseAgentStreamResult {
+  const chat = useChat();
+  const lastAssistant = [...chat.messages]
+    .reverse()
+    .find((m): m is AssistantMessage => m.role === "assistant");
+  const lastUser = [...chat.messages].reverse().find((m) => m.role === "user");
+  return {
+    status: chat.status,
+    question: lastUser?.content ?? "",
+    trace: lastAssistant?.trace ?? [],
+    answer: lastAssistant?.content ?? "",
+    error: lastAssistant?.error ?? null,
+    send: chat.send,
+    abort: chat.abort,
+    reset: chat.reset,
+  };
 }
