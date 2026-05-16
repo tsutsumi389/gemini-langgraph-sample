@@ -6,11 +6,10 @@ import { cn } from "@/lib/utils";
 type Props = {
   from: "user" | "assistant";
   createdAt?: number;
-  content?: string;
-  children?: React.ReactNode;
+  content?: React.ReactNode;
 };
 
-export function MessageRow({ from, createdAt, content, children }: Props) {
+export function MessageRow({ from, createdAt, content }: Props) {
   const isUser = from === "user";
   return (
     <div
@@ -20,10 +19,10 @@ export function MessageRow({ from, createdAt, content, children }: Props) {
     >
       <Avatar from={from} />
       <div className={cn("flex max-w-[85%] flex-col gap-1", isUser ? "items-end" : "items-start")}>
-        {content !== undefined ? (
+        {typeof content === "string" ? (
           <MessageBubble from={from} content={content} />
         ) : (
-          <MessageBubble from={from}>{children}</MessageBubble>
+          <MessageBubble from={from}>{content}</MessageBubble>
         )}
         {createdAt !== undefined && createdAt > 0 && (
           <time

@@ -1,3 +1,5 @@
+const DOT_DELAYS_MS = [0, 150, 300];
+
 export function ThinkingDots() {
   return (
     <span
@@ -7,7 +9,7 @@ export function ThinkingDots() {
     >
       <span>考え中</span>
       <span className="inline-flex items-end gap-0.5">
-        {[0, 150, 300].map((delay) => (
+        {DOT_DELAYS_MS.map((delay) => (
           <span
             key={delay}
             style={{ animationDelay: `${delay}ms` }}

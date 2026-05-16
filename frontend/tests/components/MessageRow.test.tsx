@@ -12,12 +12,8 @@ describe("MessageRow", () => {
     expect(screen.getByText("hello")).toBeInTheDocument();
   });
 
-  it("renders assistant avatar with children content", () => {
-    render(
-      <MessageRow from="assistant">
-        <span>streaming…</span>
-      </MessageRow>,
-    );
+  it("renders assistant avatar with ReactNode content", () => {
+    render(<MessageRow from="assistant" content={<span>streaming…</span>} />);
 
     expect(screen.getByTestId("avatar-assistant")).toBeInTheDocument();
     expect(screen.getByText("streaming…")).toBeInTheDocument();

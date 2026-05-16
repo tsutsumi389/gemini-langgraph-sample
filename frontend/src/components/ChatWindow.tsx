@@ -42,10 +42,10 @@ export function ChatWindow({ messages, activeAssistantId, onSampleClick, onRegen
     endRef.current?.scrollIntoView?.({ behavior: smooth ? "smooth" : "auto", block: "end" });
   }, []);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: messages 配列の更新時にも追従させたい (新規ターン追加 + content ストリーミング)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: ストリーミングで messages 参照が更新されるたびに末尾追従させたい
   useEffect(() => {
     if (!isAtBottom) return;
-    scrollToBottom(true);
+    scrollToBottom(false);
   }, [messages, isAtBottom, scrollToBottom]);
 
   const isEmpty = messages.length === 0;
@@ -117,28 +117,25 @@ function AssistantTurn({
   isActive: boolean;
   onRegenerate: () => void;
 }) {
-  const isStreamingEmpty = message.status === "streaming" && !message.content;
-  const isError = message.status === "error";
+  const isStreaming = message.status === "streaming";
+  const content =
+    isStreaming && !message.content ? (
+      <ThinkingDots />
+    ) : message.status === "error" ? (
+      <span className="text-destructive">エラー: {message.error ?? "unknown"}</span>
+    ) : (
+      message.content
+    );
 
   return (
     <div className="flex flex-col gap-1.5">
       {message.trace.length > 0 && (
         <div className="ml-9">
-          <AgentTrace trace={message.trace} active={isActive && message.status === "streaming"} />
+          <AgentTrace trace={message.trace} active={isActive && isStreaming} />
         </div>
       )}
-      {isStreamingEmpty ? (
-        <MessageRow from="assistant" createdAt={message.createdAt}>
-          <ThinkingDots />
-        </MessageRow>
-      ) : isError ? (
-        <MessageRow from="assistant" createdAt={message.createdAt}>
-          <span className="text-destructive">エラー: {message.error ?? "unknown"}</span>
-        </MessageRow>
-      ) : (
-        <MessageRow from="assistant" content={message.content} createdAt={message.createdAt} />
-      )}
-      {message.status !== "streaming" && (
+      <MessageRow from="assistant" content={content} createdAt={message.createdAt} />
+      {!isStreaming && (
         <div className="ml-9">
           <MessageActions
             content={message.content}
