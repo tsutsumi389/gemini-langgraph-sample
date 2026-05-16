@@ -1,17 +1,19 @@
 "use client";
 
+import { Send, Square } from "lucide-react";
 import { type FormEvent, type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 type Props = {
   onSend: (question: string) => void;
-  disabled: boolean;
+  isStreaming: boolean;
+  onAbort?: () => void;
 };
 
 const MAX_ROWS = 8;
 
-export function ChatInput({ onSend, disabled }: Props) {
+export function ChatInput({ onSend, isStreaming, onAbort }: Props) {
   const [value, setValue] = useState("");
   const ref = useRef<HTMLTextAreaElement | null>(null);
   const isComposingRef = useRef(false);
@@ -26,8 +28,9 @@ export function ChatInput({ onSend, disabled }: Props) {
   }, []);
 
   const submit = () => {
+    if (isStreaming) return;
     const trimmed = value.trim();
-    if (!trimmed || disabled) return;
+    if (!trimmed) return;
     onSend(trimmed);
     setValue("");
     if (ref.current) ref.current.style.height = "auto";
@@ -40,7 +43,7 @@ export function ChatInput({ onSend, disabled }: Props) {
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key !== "Enter") return;
-    if (e.shiftKey) return; // 改行
+    if (e.shiftKey) return;
     if (isComposingRef.current || e.nativeEvent.isComposing || e.keyCode === 229) return;
     e.preventDefault();
     submit();
@@ -56,7 +59,7 @@ export function ChatInput({ onSend, disabled }: Props) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex items-end gap-2 w-full">
+    <form onSubmit={handleSubmit} className="flex w-full items-end gap-2">
       <Textarea
         ref={ref}
         aria-label="question"
@@ -70,13 +73,26 @@ export function ChatInput({ onSend, disabled }: Props) {
         onCompositionEnd={() => {
           isComposingRef.current = false;
         }}
-        disabled={disabled}
         rows={1}
-        className="flex-1 min-h-[40px] max-h-[200px]"
+        className="max-h-[200px] min-h-[40px] flex-1"
       />
-      <Button type="submit" disabled={disabled || !value.trim()}>
-        Send
-      </Button>
+      {isStreaming ? (
+        <Button
+          type="button"
+          variant="secondary"
+          aria-label="stop"
+          onClick={() => onAbort?.()}
+          className="gap-1.5"
+        >
+          <Square className="h-3.5 w-3.5 fill-current" />
+          Stop
+        </Button>
+      ) : (
+        <Button type="submit" disabled={!value.trim()} className="gap-1.5">
+          <Send className="h-3.5 w-3.5" />
+          Send
+        </Button>
+      )}
     </form>
   );
 }

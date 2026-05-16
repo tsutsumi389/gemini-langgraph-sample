@@ -129,6 +129,23 @@
   }
 }
 
+@keyframes bounce-dot {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+.thinking-dot {
+  animation: bounce-dot 1s ease-in-out infinite;
+}
+
 /* ── highlight.js minimal theme (light + dark via CSS vars) ─────────────── */
 .hljs {
   color: var(--foreground);
