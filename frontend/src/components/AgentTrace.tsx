@@ -1,3 +1,4 @@
+import { Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TraceItem } from "@/types/agent";
 
@@ -31,11 +32,26 @@ export function AgentTrace({ trace, active = false }: Props) {
               isActive && "border-primary bg-primary/5",
             )}
           >
-            <span
-              data-testid="trace-node-label"
-              className="font-medium uppercase tracking-wide text-muted-foreground"
-            >
-              {NODE_LABEL[item.node] ?? item.node}
+            <span className="flex items-center gap-1.5">
+              {isActive ? (
+                <Loader2
+                  data-testid="trace-status-active"
+                  className="h-3 w-3 animate-spin text-primary"
+                  aria-hidden="true"
+                />
+              ) : (
+                <Check
+                  data-testid="trace-status-done"
+                  className="h-3 w-3 text-primary"
+                  aria-hidden="true"
+                />
+              )}
+              <span
+                data-testid="trace-node-label"
+                className="font-medium uppercase tracking-wide text-muted-foreground"
+              >
+                {NODE_LABEL[item.node] ?? item.node}
+              </span>
             </span>
             <dl className="grid grid-cols-[max-content_1fr] gap-x-3 gap-y-0.5 text-muted-foreground">
               {Object.entries(item.update).map(([k, v]) => (

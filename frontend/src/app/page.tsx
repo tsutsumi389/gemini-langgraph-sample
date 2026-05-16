@@ -36,7 +36,8 @@ export default function Home() {
           onSend={(q) => {
             void chat.send(q);
           }}
-          disabled={chat.status === "streaming"}
+          isStreaming={chat.status === "streaming"}
+          onAbort={chat.abort}
         />
       </div>
     </main>

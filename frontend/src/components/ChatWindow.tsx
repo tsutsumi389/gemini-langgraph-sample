@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { ArrowDown } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AgentTrace } from "@/components/AgentTrace";
 import { MessageActions } from "@/components/MessageActions";
-import { MessageBubble } from "@/components/MessageBubble";
+import { MessageRow } from "@/components/MessageRow";
+import { ThinkingDots } from "@/components/ThinkingDots";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SAMPLE_QUESTIONS } from "@/lib/samples";
 import type { AssistantMessage, ChatMessage } from "@/types/agent";
@@ -17,54 +20,91 @@ type Props = {
 
 export function ChatWindow({ messages, activeAssistantId, onSampleClick, onRegenerate }: Props) {
   const endRef = useRef<HTMLDivElement | null>(null);
+  const [isAtBottom, setIsAtBottom] = useState(true);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: messages.length が増えたときだけ末尾へスクロールしたい
   useEffect(() => {
-    endRef.current?.scrollIntoView?.({ behavior: "smooth", block: "end" });
-  }, [messages.length]);
+    const sentinel = endRef.current;
+    if (!sentinel) return;
+    const viewport = sentinel.closest('[data-slot="scroll-area-viewport"]');
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          setIsAtBottom(entry.isIntersecting);
+        }
+      },
+      { root: viewport, threshold: 0.01, rootMargin: "0px 0px 32px 0px" },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, []);
+
+  const scrollToBottom = useCallback((smooth = true) => {
+    endRef.current?.scrollIntoView?.({ behavior: smooth ? "smooth" : "auto", block: "end" });
+  }, []);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: messages 配列の更新時にも追従させたい (新規ターン追加 + content ストリーミング)
+  useEffect(() => {
+    if (!isAtBottom) return;
+    scrollToBottom(true);
+  }, [messages, isAtBottom, scrollToBottom]);
 
   const isEmpty = messages.length === 0;
 
   return (
-    <ScrollArea className="flex-1 w-full rounded-md border bg-card">
-      <div className="flex flex-col gap-3 p-4 min-h-[280px]">
-        {isEmpty && (
-          <div className="flex flex-col items-center gap-3 py-8">
-            <p className="text-sm text-muted-foreground">
-              質問を入力してエージェントに問い合わせてください。
-            </p>
-            <ul className="flex flex-wrap justify-center gap-2">
-              {SAMPLE_QUESTIONS.map((q) => (
-                <li key={q}>
-                  <button
-                    type="button"
-                    onClick={() => onSampleClick(q)}
-                    className="rounded-full border bg-background px-3 py-1 text-xs text-muted-foreground hover:border-primary hover:text-foreground"
-                  >
-                    {q}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+    <div className="relative flex-1">
+      <ScrollArea className="h-full w-full rounded-md border bg-card">
+        <div className="flex min-h-[280px] flex-col gap-4 p-4">
+          {isEmpty && (
+            <div className="flex flex-col items-center gap-3 py-8">
+              <p className="text-sm text-muted-foreground">
+                質問を入力してエージェントに問い合わせてください。
+              </p>
+              <ul className="flex flex-wrap justify-center gap-2">
+                {SAMPLE_QUESTIONS.map((q) => (
+                  <li key={q}>
+                    <button
+                      type="button"
+                      onClick={() => onSampleClick(q)}
+                      className="rounded-full border bg-background px-3 py-1 text-xs text-muted-foreground hover:border-primary hover:text-foreground"
+                    >
+                      {q}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-        {messages.map((m) =>
-          m.role === "user" ? (
-            <MessageBubble key={m.id} from="user" content={m.content} />
-          ) : (
-            <AssistantTurn
-              key={m.id}
-              message={m}
-              isActive={m.id === activeAssistantId}
-              onRegenerate={() => onRegenerate(m.id)}
-            />
-          ),
-        )}
+          {messages.map((m) =>
+            m.role === "user" ? (
+              <MessageRow key={m.id} from="user" content={m.content} createdAt={m.createdAt} />
+            ) : (
+              <AssistantTurn
+                key={m.id}
+                message={m}
+                isActive={m.id === activeAssistantId}
+                onRegenerate={() => onRegenerate(m.id)}
+              />
+            ),
+          )}
 
-        <div ref={endRef} />
-      </div>
-    </ScrollArea>
+          <div ref={endRef} />
+        </div>
+      </ScrollArea>
+
+      {!isAtBottom && (
+        <Button
+          type="button"
+          size="icon"
+          variant="secondary"
+          aria-label="scroll to bottom"
+          onClick={() => scrollToBottom(true)}
+          className="absolute bottom-4 right-4 h-9 w-9 rounded-full border shadow-md"
+        >
+          <ArrowDown className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
   );
 }
 
@@ -77,27 +117,35 @@ function AssistantTurn({
   isActive: boolean;
   onRegenerate: () => void;
 }) {
+  const isStreamingEmpty = message.status === "streaming" && !message.content;
+  const isError = message.status === "error";
+
   return (
-    <div className="flex flex-col gap-1.5 self-start max-w-[85%]">
+    <div className="flex flex-col gap-1.5">
       {message.trace.length > 0 && (
-        <AgentTrace trace={message.trace} active={isActive && message.status === "streaming"} />
+        <div className="ml-9">
+          <AgentTrace trace={message.trace} active={isActive && message.status === "streaming"} />
+        </div>
       )}
-      {message.status === "streaming" && !message.content ? (
-        <MessageBubble from="assistant">
-          <span className="inline-flex items-center gap-1 text-muted-foreground">
-            考え中
-            <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-muted-foreground" />
-          </span>
-        </MessageBubble>
-      ) : message.status === "error" ? (
-        <MessageBubble from="assistant">
+      {isStreamingEmpty ? (
+        <MessageRow from="assistant" createdAt={message.createdAt}>
+          <ThinkingDots />
+        </MessageRow>
+      ) : isError ? (
+        <MessageRow from="assistant" createdAt={message.createdAt}>
           <span className="text-destructive">エラー: {message.error ?? "unknown"}</span>
-        </MessageBubble>
+        </MessageRow>
       ) : (
-        <MessageBubble from="assistant" content={message.content} />
+        <MessageRow from="assistant" content={message.content} createdAt={message.createdAt} />
       )}
       {message.status !== "streaming" && (
-        <MessageActions content={message.content} onRegenerate={onRegenerate} disabled={isActive} />
+        <div className="ml-9">
+          <MessageActions
+            content={message.content}
+            onRegenerate={onRegenerate}
+            disabled={isActive}
+          />
+        </div>
       )}
     </div>
   );
