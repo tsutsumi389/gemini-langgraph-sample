@@ -59,7 +59,10 @@ export function ChatInput({ onSend, isStreaming, onAbort }: Props) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full items-end gap-2">
+    <form
+      onSubmit={handleSubmit}
+      className="mx-auto flex w-full max-w-3xl items-end gap-2 rounded-2xl border border-border/70 bg-card p-2 shadow-sm transition-all focus-within:border-primary/50 focus-within:shadow-md"
+    >
       <Textarea
         ref={ref}
         aria-label="question"
@@ -74,7 +77,7 @@ export function ChatInput({ onSend, isStreaming, onAbort }: Props) {
           isComposingRef.current = false;
         }}
         rows={1}
-        className="max-h-[200px] min-h-[40px] flex-1"
+        className="max-h-[200px] min-h-[40px] flex-1 resize-none border-0 bg-transparent px-2 py-2 shadow-none focus-visible:ring-0"
       />
       {isStreaming ? (
         <Button
@@ -82,13 +85,13 @@ export function ChatInput({ onSend, isStreaming, onAbort }: Props) {
           variant="secondary"
           aria-label="stop"
           onClick={() => onAbort?.()}
-          className="gap-1.5"
+          className="gap-1.5 rounded-xl"
         >
           <Square className="h-3.5 w-3.5 fill-current" />
           Stop
         </Button>
       ) : (
-        <Button type="submit" disabled={!value.trim()} className="gap-1.5">
+        <Button type="submit" disabled={!value.trim()} className="gap-1.5 rounded-xl shadow-sm">
           <Send className="h-3.5 w-3.5" />
           Send
         </Button>

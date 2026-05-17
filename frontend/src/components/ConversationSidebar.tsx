@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageSquarePlus, Trash2 } from "lucide-react";
+import { Bot, Info, MessageSquarePlus, Trash2 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -30,19 +30,27 @@ export function ConversationSidebar({
   return (
     <aside
       data-testid="conversation-sidebar"
-      className="flex h-full w-full flex-col gap-3 border-r bg-card p-3"
+      className="flex h-full w-full flex-col gap-3 border-r border-border/60 bg-card p-3"
     >
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Conversations
-        </span>
+      <div className="flex items-center gap-2 px-1 pt-1">
+        <div
+          aria-hidden="true"
+          className="flex h-7 w-7 items-center justify-center rounded-md border border-primary/20 bg-primary/10 text-primary"
+        >
+          <Bot className="h-4 w-4" />
+        </div>
+        <div className="flex min-w-0 flex-col leading-tight">
+          <span className="truncate text-[13px] font-semibold tracking-tight">Gemini Agent</span>
+          <span className="truncate text-[10px] uppercase tracking-wider text-muted-foreground">
+            Conversations
+          </span>
+        </div>
       </div>
 
       <Button
         type="button"
-        variant="secondary"
         onClick={onCreate}
-        className="w-full justify-start gap-2"
+        className="w-full justify-start gap-2 rounded-lg shadow-sm"
       >
         <MessageSquarePlus className="h-4 w-4" />
         New chat
@@ -58,10 +66,10 @@ export function ConversationSidebar({
                   data-testid="conversation-item"
                   data-active={isActive ? "true" : "false"}
                   className={cn(
-                    "group flex items-center gap-1 rounded-md border border-transparent px-2 py-1.5 text-sm",
+                    "group flex items-center gap-1 rounded-md border px-2 py-1.5 text-sm transition-colors",
                     isActive
-                      ? "border-border bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent/40 hover:text-foreground",
+                      ? "border-primary/30 bg-accent text-accent-foreground shadow-sm"
+                      : "border-transparent text-muted-foreground hover:bg-accent/50 hover:text-foreground",
                   )}
                 >
                   <button
@@ -73,12 +81,13 @@ export function ConversationSidebar({
                     <span
                       aria-hidden="true"
                       className={cn(
-                        "h-1.5 w-1.5 shrink-0 rounded-full",
+                        "h-1.5 w-1.5 shrink-0 rounded-full transition-shadow",
                         c.status === "streaming"
                           ? "animate-pulse bg-primary"
                           : c.status === "error"
                             ? "bg-destructive"
                             : "bg-muted-foreground/40",
+                        isActive && c.status === "streaming" && "ring-2 ring-primary/30",
                       )}
                     />
                     <span className="truncate" title={c.title}>
@@ -91,7 +100,7 @@ export function ConversationSidebar({
                     size="icon"
                     aria-label={`delete ${c.title}`}
                     onClick={() => handleDelete(c.id, c.title)}
-                    className="h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                    className="h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-60"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
@@ -102,8 +111,11 @@ export function ConversationSidebar({
         </ul>
       </ScrollArea>
 
-      <div className="flex items-center justify-between border-t pt-3">
-        <span className="text-[10px] text-muted-foreground">メモリ保持・揮発</span>
+      <div className="flex items-center justify-between border-t border-border/60 pt-3">
+        <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+          <Info className="h-3 w-3" aria-hidden="true" />
+          メモリ保持・揮発
+        </span>
         <ThemeToggle />
       </div>
     </aside>

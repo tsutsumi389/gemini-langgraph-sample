@@ -86,7 +86,7 @@
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
+  --card: oklch(0.21 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
@@ -144,6 +144,28 @@
 
 .thinking-dot {
   animation: bounce-dot 1s ease-in-out infinite;
+}
+
+@keyframes message-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-enter {
+  animation: message-in 200ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .message-enter,
+  .thinking-dot {
+    animation: none;
+  }
 }
 
 /* ── highlight.js minimal theme (light + dark via CSS vars) ─────────────── */

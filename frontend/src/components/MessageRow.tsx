@@ -15,10 +15,15 @@ export function MessageRow({ from, createdAt, content }: Props) {
     <div
       data-testid="message-row"
       data-from={from}
-      className={cn("flex w-full items-start gap-2", isUser && "flex-row-reverse")}
+      className={cn("flex w-full items-start gap-2.5", isUser && "flex-row-reverse")}
     >
       <Avatar from={from} />
-      <div className={cn("flex max-w-[85%] flex-col gap-1", isUser ? "items-end" : "items-start")}>
+      <div
+        className={cn(
+          "flex max-w-[min(85%,48rem)] flex-col gap-1.5",
+          isUser ? "items-end" : "items-start",
+        )}
+      >
         {typeof content === "string" ? (
           <MessageBubble from={from} content={content} />
         ) : (
@@ -28,7 +33,7 @@ export function MessageRow({ from, createdAt, content }: Props) {
           <time
             data-testid="message-time"
             dateTime={new Date(createdAt).toISOString()}
-            className="px-1 text-[10px] text-muted-foreground"
+            className="px-1 font-mono text-[11px] text-muted-foreground tabular-nums"
           >
             {formatHm(createdAt)}
           </time>
@@ -46,13 +51,13 @@ function Avatar({ from }: { from: "user" | "assistant" }) {
       data-testid={`avatar-${from}`}
       aria-hidden="true"
       className={cn(
-        "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border",
+        "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border shadow-sm",
         isUser
-          ? "border-primary/30 bg-primary/10 text-primary"
-          : "border-border bg-muted text-muted-foreground",
+          ? "border-primary/40 bg-primary text-primary-foreground"
+          : "border-border bg-gradient-to-br from-muted to-card text-foreground",
       )}
     >
-      <Icon className="h-3.5 w-3.5" />
+      <Icon className="h-4 w-4" />
     </div>
   );
 }
