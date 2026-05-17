@@ -25,10 +25,18 @@ export type AssistantMessage = {
 
 export type ChatMessage = UserMessage | AssistantMessage;
 
-export type ChatState = {
+export type Conversation = {
+  id: string;
+  title: string;
   messages: ChatMessage[];
   activeAssistantId: string | null;
   status: StreamStatus;
+  createdAt: number;
+};
+
+export type ChatState = {
+  conversations: Conversation[];
+  activeConversationId: string;
 };
 
 export type ChatEvent =
