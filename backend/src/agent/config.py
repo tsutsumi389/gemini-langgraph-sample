@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-2.5-flash"
     max_iterations: int = 2
     cors_origins: str = "http://localhost:3000"
+    database_url: str = "postgresql+asyncpg://app:app@localhost:5432/app"
 
     @property
     def cors_origin_list(self) -> list[str]:

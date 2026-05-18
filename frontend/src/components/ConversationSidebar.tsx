@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, Info, MessageSquarePlus, Trash2 } from "lucide-react";
+import { Bot, MessageSquarePlus, Trash2 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -111,11 +111,7 @@ export function ConversationSidebar({
         </ul>
       </ScrollArea>
 
-      <div className="flex items-center justify-between border-t border-border/60 pt-3">
-        <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-          <Info className="h-3 w-3" aria-hidden="true" />
-          メモリ保持・揮発
-        </span>
+      <div className="flex items-center justify-end border-t border-border/60 pt-3">
         <ThemeToggle />
       </div>
     </aside>

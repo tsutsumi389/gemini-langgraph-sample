@@ -1,7 +1,12 @@
 "use client";
 
-import { useCallback, useReducer, useRef } from "react";
-import { chatEndpoint } from "@/lib/api";
+import { useCallback, useEffect, useReducer, useRef } from "react";
+import {
+  deleteConversation as apiDeleteConversation,
+  getConversation as apiGetConversation,
+  listConversations as apiListConversations,
+  chatEndpoint,
+} from "@/lib/api";
 import { parseSSEChunk } from "@/lib/sse";
 import type {
   AssistantMessage,
@@ -29,6 +34,11 @@ type Action =
       replaceId: string;
     }
   | { type: "event"; conversationId: string; assistantId: string; event: ChatEvent }
+  | {
+      type: "rebind_conversation";
+      fromId: string;
+      toId: string;
+    }
   | { type: "finish"; conversationId: string; assistantId: string }
   | {
       type: "fail";
@@ -39,16 +49,27 @@ type Action =
   | { type: "create_conversation"; id: string }
   | { type: "select_conversation"; id: string }
   | { type: "delete_conversation"; id: string; fallbackId: string }
+  | { type: "hydrate"; conversations: Conversation[]; activeId: string }
+  | { type: "replace_conversation"; id: string; conversation: Conversation }
   | { type: "reset"; id: string };
 
 const NEW_CHAT_TITLE = "New chat";
 const TITLE_MAX = 24;
+const LOCAL_PREFIX = "local-";
 
 function newId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();
   }
   return Math.random().toString(36).slice(2);
+}
+
+function newLocalId(): string {
+  return `${LOCAL_PREFIX}${newId()}`;
+}
+
+function isLocalId(id: string): boolean {
+  return id.startsWith(LOCAL_PREFIX);
 }
 
 function emptyConversation(id: string): Conversation {
@@ -69,7 +90,7 @@ function deriveTitle(question: string): string {
 }
 
 function initialState(): ChatState {
-  const id = newId();
+  const id = newLocalId();
   return {
     conversations: [emptyConversation(id)],
     activeConversationId: id,
@@ -158,6 +179,16 @@ function reducer(state: ChatState, action: Action): ChatState {
         };
       });
     }
+    case "rebind_conversation": {
+      return {
+        ...state,
+        conversations: state.conversations.map((c) =>
+          c.id === action.fromId ? { ...c, id: action.toId } : c,
+        ),
+        activeConversationId:
+          state.activeConversationId === action.fromId ? action.toId : state.activeConversationId,
+      };
+    }
     case "event": {
       return updateConversation(state, action.conversationId, (c) => {
         const messages = c.messages.map((m) =>
@@ -212,6 +243,16 @@ function reducer(state: ChatState, action: Action): ChatState {
         state.activeConversationId === action.id ? remaining[0].id : state.activeConversationId;
       return { conversations: remaining, activeConversationId: activeId };
     }
+    case "hydrate": {
+      if (action.conversations.length === 0) return state;
+      return {
+        conversations: action.conversations,
+        activeConversationId: action.activeId,
+      };
+    }
+    case "replace_conversation": {
+      return updateConversation(state, action.id, () => action.conversation);
+    }
     case "reset":
       return { conversations: [emptyConversation(action.id)], activeConversationId: action.id };
     default:
@@ -256,7 +297,34 @@ export function useChat(): UseChatResult {
   const [state, dispatch] = useReducer(reducer, undefined, initialState);
   const abortMapRef = useRef<Map<string, AbortController>>(new Map());
   const stateRef = useRef(state);
+  const loadedRef = useRef<Set<string>>(new Set());
   stateRef.current = state;
+
+  useEffect(() => {
+    let cancelled = false;
+    apiListConversations()
+      .then((items) => {
+        if (cancelled || items.length === 0) return;
+        dispatch({ type: "hydrate", conversations: items, activeId: items[0].id });
+      })
+      .catch(() => {
+        /* ignore — keep the local empty conversation */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const ensureLoaded = useCallback(async (id: string) => {
+    if (isLocalId(id) || loadedRef.current.has(id)) return;
+    try {
+      const conv = await apiGetConversation(id);
+      loadedRef.current.add(id);
+      dispatch({ type: "replace_conversation", id, conversation: conv });
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const abortConversation = useCallback((conversationId: string) => {
     const ctrl = abortMapRef.current.get(conversationId);
@@ -273,7 +341,8 @@ export function useChat(): UseChatResult {
   const reset = useCallback(() => {
     for (const ctrl of abortMapRef.current.values()) ctrl.abort();
     abortMapRef.current.clear();
-    dispatch({ type: "reset", id: newId() });
+    loadedRef.current.clear();
+    dispatch({ type: "reset", id: newLocalId() });
   }, []);
 
   const runStream = useCallback(
@@ -282,12 +351,13 @@ export function useChat(): UseChatResult {
       const controller = new AbortController();
       abortMapRef.current.set(conversationId, controller);
 
+      const sendId = isLocalId(conversationId) ? null : conversationId;
       let response: Response;
       try {
         response = await fetch(chatEndpoint, {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ question }),
+          body: JSON.stringify({ question, conversation_id: sendId }),
           signal: controller.signal,
         });
       } catch (e) {
@@ -314,6 +384,36 @@ export function useChat(): UseChatResult {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+      let activeConversationId = conversationId;
+
+      const handleEvent = (event: string, data: string) => {
+        const parsed = decodeEvent(event, data);
+        if (!parsed) return;
+        if (parsed.type === "graph_start") {
+          const serverId = (parsed.payload as { conversation_id?: string }).conversation_id;
+          if (serverId && serverId !== activeConversationId) {
+            const controllers = abortMapRef.current;
+            const ctrl = controllers.get(activeConversationId);
+            if (ctrl) {
+              controllers.delete(activeConversationId);
+              controllers.set(serverId, ctrl);
+            }
+            dispatch({
+              type: "rebind_conversation",
+              fromId: activeConversationId,
+              toId: serverId,
+            });
+            loadedRef.current.add(serverId);
+            activeConversationId = serverId;
+          }
+        }
+        dispatch({
+          type: "event",
+          conversationId: activeConversationId,
+          assistantId,
+          event: parsed,
+        });
+      };
 
       try {
         while (true) {
@@ -322,31 +422,25 @@ export function useChat(): UseChatResult {
           buffer += decoder.decode(value, { stream: true });
           const { events, rest } = parseSSEChunk(buffer);
           buffer = rest;
-          for (const e of events) {
-            const parsed = decodeEvent(e.event, e.data);
-            if (parsed) dispatch({ type: "event", conversationId, assistantId, event: parsed });
-          }
+          for (const e of events) handleEvent(e.event, e.data);
         }
         const tail = buffer + decoder.decode();
         if (tail.trim()) {
           const { events } = parseSSEChunk(`${tail}\n\n`);
-          for (const e of events) {
-            const parsed = decodeEvent(e.event, e.data);
-            if (parsed) dispatch({ type: "event", conversationId, assistantId, event: parsed });
-          }
+          for (const e of events) handleEvent(e.event, e.data);
         }
-        dispatch({ type: "finish", conversationId, assistantId });
+        dispatch({ type: "finish", conversationId: activeConversationId, assistantId });
       } catch (e) {
         if ((e as Error)?.name === "AbortError") return;
         dispatch({
           type: "fail",
-          conversationId,
+          conversationId: activeConversationId,
           assistantId,
           message: e instanceof Error ? e.message : "stream error",
         });
       } finally {
-        if (abortMapRef.current.get(conversationId) === controller) {
-          abortMapRef.current.delete(conversationId);
+        if (abortMapRef.current.get(activeConversationId) === controller) {
+          abortMapRef.current.delete(activeConversationId);
         }
       }
     },
@@ -389,19 +483,29 @@ export function useChat(): UseChatResult {
   );
 
   const createConversation = useCallback((): string => {
-    const id = newId();
+    const id = newLocalId();
     dispatch({ type: "create_conversation", id });
     return id;
   }, []);
 
-  const selectConversation = useCallback((id: string) => {
-    dispatch({ type: "select_conversation", id });
-  }, []);
+  const selectConversation = useCallback(
+    (id: string) => {
+      dispatch({ type: "select_conversation", id });
+      void ensureLoaded(id);
+    },
+    [ensureLoaded],
+  );
 
   const deleteConversation = useCallback(
     (id: string) => {
       abortConversation(id);
-      dispatch({ type: "delete_conversation", id, fallbackId: newId() });
+      dispatch({ type: "delete_conversation", id, fallbackId: newLocalId() });
+      loadedRef.current.delete(id);
+      if (!isLocalId(id)) {
+        void apiDeleteConversation(id).catch(() => {
+          /* ignore */
+        });
+      }
     },
     [abortConversation],
   );
