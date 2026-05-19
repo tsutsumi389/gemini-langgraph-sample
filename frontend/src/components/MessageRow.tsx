@@ -1,4 +1,4 @@
-import { Bot, User } from "lucide-react";
+import { Sparkles, User } from "lucide-react";
 import { MessageBubble } from "@/components/MessageBubble";
 import { formatHm } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -15,7 +15,7 @@ export function MessageRow({ from, createdAt, content }: Props) {
     <div
       data-testid="message-row"
       data-from={from}
-      className={cn("flex w-full items-start gap-2.5", isUser && "flex-row-reverse")}
+      className={cn("flex w-full items-start gap-3", isUser && "flex-row-reverse")}
     >
       <Avatar from={from} />
       <div
@@ -33,7 +33,7 @@ export function MessageRow({ from, createdAt, content }: Props) {
           <time
             data-testid="message-time"
             dateTime={new Date(createdAt).toISOString()}
-            className="px-1 font-mono text-[11px] text-muted-foreground tabular-nums"
+            className="px-1 font-mono text-[11px] text-muted-foreground/80 tabular-nums"
           >
             {formatHm(createdAt)}
           </time>
@@ -45,16 +45,16 @@ export function MessageRow({ from, createdAt, content }: Props) {
 
 function Avatar({ from }: { from: "user" | "assistant" }) {
   const isUser = from === "user";
-  const Icon = isUser ? User : Bot;
+  const Icon = isUser ? User : Sparkles;
   return (
     <div
       data-testid={`avatar-${from}`}
       aria-hidden="true"
       className={cn(
-        "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border shadow-sm",
+        "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border shadow-sm",
         isUser
           ? "border-primary/40 bg-primary text-primary-foreground"
-          : "border-border bg-gradient-to-br from-muted to-card text-foreground",
+          : "border-accent-brand/30 bg-gradient-to-br from-accent-brand to-accent-brand/65 text-accent-brand-foreground shadow-accent-brand/20",
       )}
     >
       <Icon className="h-4 w-4" />

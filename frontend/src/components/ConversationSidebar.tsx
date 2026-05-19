@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, MessageSquarePlus, Trash2 } from "lucide-react";
+import { MessageSquarePlus, Sparkles, Trash2 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -30,18 +30,20 @@ export function ConversationSidebar({
   return (
     <aside
       data-testid="conversation-sidebar"
-      className="flex h-full w-full flex-col gap-3 border-r border-border/60 bg-card p-3"
+      className="flex h-full w-full flex-col gap-3 border-r border-border/60 bg-sidebar/95 p-3 backdrop-blur"
     >
-      <div className="flex items-center gap-2 px-1 pt-1">
+      <div className="flex items-center gap-2.5 px-1 pt-1">
         <div
           aria-hidden="true"
-          className="flex h-7 w-7 items-center justify-center rounded-md border border-primary/20 bg-primary/10 text-primary"
+          className="flex h-8 w-8 items-center justify-center rounded-xl border border-accent-brand/30 bg-gradient-to-br from-accent-brand to-accent-brand/65 text-accent-brand-foreground shadow-sm shadow-accent-brand/25"
         >
-          <Bot className="h-4 w-4" />
+          <Sparkles className="h-4 w-4" />
         </div>
         <div className="flex min-w-0 flex-col leading-tight">
-          <span className="truncate text-[13px] font-semibold tracking-tight">Gemini Agent</span>
-          <span className="truncate text-[10px] uppercase tracking-wider text-muted-foreground">
+          <span className="truncate font-heading text-[13px] font-semibold tracking-tight">
+            Gemini Agent
+          </span>
+          <span className="truncate text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
             Conversations
           </span>
         </div>
@@ -50,14 +52,14 @@ export function ConversationSidebar({
       <Button
         type="button"
         onClick={onCreate}
-        className="w-full justify-start gap-2 rounded-lg shadow-sm"
+        className="w-full justify-start gap-2 rounded-xl bg-accent-brand text-accent-brand-foreground shadow-sm shadow-accent-brand/20 transition-colors hover:bg-accent-brand/90"
       >
         <MessageSquarePlus className="h-4 w-4" />
         New chat
       </Button>
 
       <ScrollArea className="-mx-1 flex-1">
-        <ul className="flex flex-col gap-1 px-1">
+        <ul className="flex flex-col gap-0.5 px-1">
           {conversations.map((c) => {
             const isActive = c.id === activeConversationId;
             return (
@@ -66,28 +68,35 @@ export function ConversationSidebar({
                   data-testid="conversation-item"
                   data-active={isActive ? "true" : "false"}
                   className={cn(
-                    "group flex items-center gap-1 rounded-md border px-2 py-1.5 text-sm transition-colors",
+                    "group relative flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm transition-colors",
                     isActive
-                      ? "border-primary/30 bg-accent text-accent-foreground shadow-sm"
-                      : "border-transparent text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent/55 hover:text-foreground",
                   )}
                 >
+                  {isActive && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute inset-y-1.5 left-0 w-[3px] rounded-full bg-accent-brand shadow-[0_0_8px] shadow-accent-brand/50"
+                    />
+                  )}
                   <button
                     type="button"
                     onClick={() => onSelect(c.id)}
                     aria-current={isActive ? "true" : undefined}
-                    className="flex flex-1 items-center gap-2 truncate text-left"
+                    className="flex flex-1 items-center gap-2 truncate pl-1.5 text-left"
                   >
                     <span
                       aria-hidden="true"
                       className={cn(
-                        "h-1.5 w-1.5 shrink-0 rounded-full transition-shadow",
+                        "h-2 w-2 shrink-0 rounded-full transition-shadow",
                         c.status === "streaming"
-                          ? "animate-pulse bg-primary"
+                          ? "animate-pulse bg-accent-brand ring-2 ring-accent-brand/30"
                           : c.status === "error"
                             ? "bg-destructive"
-                            : "bg-muted-foreground/40",
-                        isActive && c.status === "streaming" && "ring-2 ring-primary/30",
+                            : isActive
+                              ? "bg-accent-brand/60"
+                              : "bg-muted-foreground/40",
                       )}
                     />
                     <span className="truncate" title={c.title}>
@@ -100,7 +109,7 @@ export function ConversationSidebar({
                     size="icon"
                     aria-label={`delete ${c.title}`}
                     onClick={() => handleDelete(c.id, c.title)}
-                    className="h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-60"
+                    className="h-6 w-6 opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-60"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
@@ -111,7 +120,10 @@ export function ConversationSidebar({
         </ul>
       </ScrollArea>
 
-      <div className="flex items-center justify-end border-t border-border/60 pt-3">
+      <div className="flex items-center justify-between border-t border-border/60 pt-3">
+        <span className="px-1 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+          Theme
+        </span>
         <ThemeToggle />
       </div>
     </aside>
