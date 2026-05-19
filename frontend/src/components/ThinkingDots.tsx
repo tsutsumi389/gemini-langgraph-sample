@@ -13,7 +13,7 @@ export function ThinkingDots() {
           <span
             key={delay}
             style={{ animationDelay: `${delay}ms` }}
-            className="thinking-dot inline-block h-1.5 w-1.5 rounded-full bg-primary/60"
+            className="thinking-dot inline-block h-1.5 w-1.5 rounded-full bg-accent-brand/75"
           />
         ))}
       </span>
