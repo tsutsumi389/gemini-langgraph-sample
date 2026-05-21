@@ -15,8 +15,8 @@ export function MessageBubble({ from, children, content }: Props) {
       className={cn(
         "max-w-full text-sm leading-relaxed",
         from === "user"
-          ? "self-end rounded-2xl rounded-tr-md bg-gradient-to-br from-primary to-primary/85 px-4 py-2.5 text-primary-foreground shadow-sm shadow-primary/15"
-          : "self-start px-1 py-0.5 text-foreground",
+          ? "self-end rounded-2xl rounded-tr-md bg-[linear-gradient(135deg,var(--accent-grad-from),var(--accent-grad-to))] px-4 py-2.5 text-accent-brand-foreground shadow-[var(--shadow-elev-1)] ring-1 ring-inset ring-white/10 dark:ring-white/5"
+          : "self-start rounded-2xl rounded-tl-md bg-surface-2 px-4 py-2.5 text-foreground ring-1 ring-inset ring-hairline backdrop-blur-[2px]",
       )}
     >
       {content !== undefined ? <Markdown source={content} /> : children}

@@ -25,12 +25,12 @@ type NodeTheme = {
 
 const NODE_THEME: Record<string, NodeTheme> = {
   research: {
-    icon: "text-cyan-600/80 dark:text-cyan-400/80",
-    iconActive: "text-cyan-600 dark:text-cyan-300",
-    bg: "bg-cyan-500/5",
-    border: "border-cyan-500/30",
-    ring: "shadow-[0_0_0_3px_color-mix(in_oklab,oklch(0.7_0.13_220)_18%,transparent)]",
-    dot: "border-cyan-500/60 text-cyan-600 dark:text-cyan-300",
+    icon: "text-[oklch(0.55_0.06_220)] dark:text-[oklch(0.78_0.07_220)]",
+    iconActive: "text-[oklch(0.50_0.08_220)] dark:text-[oklch(0.85_0.09_220)]",
+    bg: "bg-[oklch(0.6_0.06_220)]/[0.04]",
+    border: "border-[oklch(0.6_0.06_220)]/25",
+    ring: "shadow-[0_0_0_3px_oklch(0.6_0.06_220/0.15)]",
+    dot: "border-[oklch(0.6_0.06_220)]/50 text-[oklch(0.50_0.08_220)] dark:text-[oklch(0.85_0.09_220)]",
   },
   reflection: {
     icon: "text-accent-brand/80",
@@ -41,12 +41,12 @@ const NODE_THEME: Record<string, NodeTheme> = {
     dot: "border-accent-brand/60 text-accent-brand",
   },
   answer: {
-    icon: "text-emerald-600/80 dark:text-emerald-400/80",
-    iconActive: "text-emerald-600 dark:text-emerald-300",
-    bg: "bg-emerald-500/5",
-    border: "border-emerald-500/30",
-    ring: "shadow-[0_0_0_3px_color-mix(in_oklab,oklch(0.7_0.15_150)_18%,transparent)]",
-    dot: "border-emerald-500/60 text-emerald-600 dark:text-emerald-300",
+    icon: "text-[oklch(0.55_0.07_165)] dark:text-[oklch(0.78_0.08_165)]",
+    iconActive: "text-[oklch(0.50_0.09_165)] dark:text-[oklch(0.85_0.10_165)]",
+    bg: "bg-[oklch(0.6_0.07_165)]/[0.04]",
+    border: "border-[oklch(0.6_0.07_165)]/25",
+    ring: "shadow-[0_0_0_3px_oklch(0.6_0.07_165/0.15)]",
+    dot: "border-[oklch(0.6_0.07_165)]/50 text-[oklch(0.50_0.09_165)] dark:text-[oklch(0.85_0.10_165)]",
   },
 };
 
@@ -71,7 +71,11 @@ export function AgentTrace({ trace, active = false }: Props) {
     <ol className="relative flex flex-col gap-1.5 pl-5">
       <span
         aria-hidden="true"
-        className="absolute top-2 bottom-2 left-[7px] w-px bg-gradient-to-b from-border via-border/70 to-transparent"
+        className="absolute top-2 bottom-2 left-[7px] w-px bg-[linear-gradient(180deg,var(--accent-brand-haze),var(--hairline-strong)_25%,var(--hairline-strong)_75%,transparent)]"
+      />
+      <span
+        aria-hidden="true"
+        className="absolute top-3 bottom-4 left-[5.5px] w-[4px] rounded-full bg-accent-brand/[0.04] blur-[3px]"
       />
       {trace.map((item, idx) => {
         const isLast = idx === trace.length - 1;
@@ -85,7 +89,7 @@ export function AgentTrace({ trace, active = false }: Props) {
             data-testid="trace-item"
             data-active={isActive ? "true" : "false"}
             className={cn(
-              "relative flex flex-col gap-0.5 rounded-lg border px-3 py-1.5 text-[11px] transition-all",
+              "group/trace relative flex flex-col gap-0.5 rounded-lg border px-3 py-2 text-[11px] backdrop-blur-[1px] transition-all duration-200 hover:-translate-y-[1px] hover:shadow-[var(--shadow-elev-1)]",
               theme.border,
               theme.bg,
               isActive && theme.ring,
@@ -98,8 +102,17 @@ export function AgentTrace({ trace, active = false }: Props) {
                 isActive ? theme.dot : "border-border text-muted-foreground",
               )}
             >
+              {isActive && (
+                <span
+                  aria-hidden="true"
+                  className="halo absolute inset-0 rounded-full bg-accent-brand/40 blur-[3px]"
+                />
+              )}
               {isActive ? (
-                <Loader2 data-testid="trace-status-active" className="h-2.5 w-2.5 animate-spin" />
+                <Loader2
+                  data-testid="trace-status-active"
+                  className="relative h-2.5 w-2.5 animate-spin"
+                />
               ) : (
                 <Check data-testid="trace-status-done" className="h-2.5 w-2.5" />
               )}
