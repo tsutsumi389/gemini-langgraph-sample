@@ -48,6 +48,14 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-hairline: var(--hairline);
+  --color-hairline-strong: var(--hairline-strong);
+  --color-accent-brand-soft: var(--accent-brand-soft);
+  --color-accent-brand-haze: var(--accent-brand-haze);
+  --shadow-elev-1: var(--shadow-elev-1);
+  --shadow-elev-2: var(--shadow-elev-2);
 }
 
 :root {
@@ -85,6 +93,18 @@
   --sidebar-ring: oklch(0.708 0 0);
   --accent-brand: oklch(0.58 0.16 280);
   --accent-brand-foreground: oklch(0.985 0 0);
+  --surface-1: oklch(1 0 0 / 0.85);
+  --surface-2: oklch(0.97 0 0 / 0.65);
+  --hairline: oklch(0.145 0 0 / 0.06);
+  --hairline-strong: oklch(0.145 0 0 / 0.1);
+  --accent-brand-soft: oklch(0.58 0.16 280 / 0.12);
+  --accent-brand-haze: oklch(0.58 0.16 280 / 0.06);
+  --accent-grad-from: oklch(0.62 0.18 285);
+  --accent-grad-to: oklch(0.54 0.14 275);
+  --shadow-elev-1: 0 1px 0 oklch(0.145 0 0 / 0.04), 0 1px 2px oklch(0.145 0 0 / 0.04);
+  --shadow-elev-2:
+    0 1px 0 oklch(0.145 0 0 / 0.04), 0 4px 14px -4px oklch(0.145 0 0 / 0.1),
+    0 10px 30px -12px oklch(0.58 0.16 280 / 0.1);
 }
 
 .dark {
@@ -121,6 +141,18 @@
   --sidebar-ring: oklch(0.556 0 0);
   --accent-brand: oklch(0.72 0.18 280);
   --accent-brand-foreground: oklch(0.145 0 0);
+  --surface-1: oklch(0.21 0 0 / 0.72);
+  --surface-2: oklch(0.21 0 0 / 0.5);
+  --hairline: oklch(1 0 0 / 0.06);
+  --hairline-strong: oklch(1 0 0 / 0.12);
+  --accent-brand-soft: oklch(0.72 0.18 280 / 0.18);
+  --accent-brand-haze: oklch(0.72 0.18 280 / 0.1);
+  --accent-grad-from: oklch(0.74 0.18 285);
+  --accent-grad-to: oklch(0.62 0.16 270);
+  --shadow-elev-1: 0 1px 0 oklch(1 0 0 / 0.03), 0 1px 2px oklch(0 0 0 / 0.3);
+  --shadow-elev-2:
+    0 1px 0 oklch(1 0 0 / 0.04), 0 6px 20px -6px oklch(0 0 0 / 0.45),
+    0 12px 36px -14px oklch(0.72 0.18 280 / 0.18);
 }
 
 @layer base {
@@ -179,18 +211,81 @@
 .shimmer-bar {
   background: linear-gradient(
     90deg,
-    color-mix(in oklab, var(--muted) 55%, transparent) 25%,
-    color-mix(in oklab, var(--muted) 95%, transparent) 50%,
-    color-mix(in oklab, var(--muted) 55%, transparent) 75%
+    color-mix(in oklab, var(--muted) 60%, transparent) 25%,
+    color-mix(in oklab, var(--accent-brand) 8%, var(--muted)) 50%,
+    color-mix(in oklab, var(--muted) 60%, transparent) 75%
   );
   background-size: 200% 100%;
-  animation: shimmer 1.6s linear infinite;
+  animation: shimmer 1.8s linear infinite;
+}
+
+.bg-noise {
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.045 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size: 160px 160px;
+}
+
+.bg-grid-fine {
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in oklab, var(--foreground) 3%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--foreground) 3%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 48px 48px;
+}
+
+@keyframes halo {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.04);
+  }
+}
+
+.halo {
+  animation: halo 4.5s ease-in-out infinite;
+}
+
+@keyframes gradient-shift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.text-gradient-brand {
+  background: linear-gradient(
+    110deg,
+    var(--foreground) 0%,
+    var(--foreground) 35%,
+    var(--accent-brand) 55%,
+    var(--foreground) 75%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradient-shift 8s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .message-enter,
   .thinking-dot,
-  .shimmer-bar {
+  .shimmer-bar,
+  .halo,
+  .text-gradient-brand {
     animation: none;
   }
 }

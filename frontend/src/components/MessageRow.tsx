@@ -33,7 +33,7 @@ export function MessageRow({ from, createdAt, content }: Props) {
           <time
             data-testid="message-time"
             dateTime={new Date(createdAt).toISOString()}
-            className="px-1 font-mono text-[11px] text-muted-foreground/80 tabular-nums"
+            className="px-1.5 font-medium font-mono text-[10.5px] text-muted-foreground/70 tabular-nums tracking-tight"
           >
             {formatHm(createdAt)}
           </time>
@@ -47,17 +47,25 @@ function Avatar({ from }: { from: "user" | "assistant" }) {
   const isUser = from === "user";
   const Icon = isUser ? User : Sparkles;
   return (
-    <div
-      data-testid={`avatar-${from}`}
-      aria-hidden="true"
-      className={cn(
-        "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border shadow-sm",
-        isUser
-          ? "border-primary/40 bg-primary text-primary-foreground"
-          : "border-accent-brand/30 bg-gradient-to-br from-accent-brand to-accent-brand/65 text-accent-brand-foreground shadow-accent-brand/20",
+    <div className="relative shrink-0">
+      {!isUser && (
+        <span
+          aria-hidden="true"
+          className="halo absolute inset-0 rounded-xl bg-accent-brand/25 blur-md"
+        />
       )}
-    >
-      <Icon className="h-4 w-4" />
+      <div
+        data-testid={`avatar-${from}`}
+        aria-hidden="true"
+        className={cn(
+          "relative flex h-8 w-8 items-center justify-center rounded-xl shadow-[var(--shadow-elev-1)] ring-1 ring-inset",
+          isUser
+            ? "bg-[linear-gradient(135deg,var(--accent-grad-from),var(--accent-grad-to))] text-accent-brand-foreground ring-white/10"
+            : "bg-surface-1 text-accent-brand ring-hairline-strong",
+        )}
+      >
+        <Icon className="h-4 w-4" />
+      </div>
     </div>
   );
 }

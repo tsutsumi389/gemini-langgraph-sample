@@ -53,7 +53,7 @@ export function ChatWindow({ messages, activeAssistantId, onSampleClick, onRegen
   return (
     <div className="relative flex-1">
       <ScrollArea className="h-full w-full">
-        <div className="mx-auto flex min-h-[280px] w-full max-w-3xl flex-col gap-6 px-4 py-6 md:px-6 md:py-8">
+        <div className="mx-auto flex min-h-[280px] w-full max-w-3xl flex-col gap-7 px-4 py-8 md:px-6 md:py-10">
           {isEmpty && <EmptyState onSampleClick={onSampleClick} />}
 
           {messages.map((m) =>
@@ -82,7 +82,7 @@ export function ChatWindow({ messages, activeAssistantId, onSampleClick, onRegen
           variant="secondary"
           aria-label="scroll to bottom"
           onClick={() => scrollToBottom(true)}
-          className="absolute right-4 bottom-4 h-9 w-9 rounded-full border border-border/60 bg-card/95 shadow-lg backdrop-blur transition-transform hover:scale-[1.04]"
+          className="absolute right-4 bottom-4 h-9 w-9 rounded-full bg-surface-1 shadow-[var(--shadow-elev-2)] ring-1 ring-hairline-strong backdrop-blur-xl transition-all hover:-translate-y-px hover:ring-accent-brand/40"
         >
           <ArrowDown className="h-4 w-4" />
         </Button>
@@ -97,18 +97,28 @@ function EmptyState({ onSampleClick }: { onSampleClick: (q: string) => void }) {
       <div className="relative flex h-16 w-16 items-center justify-center">
         <span
           aria-hidden="true"
-          className="absolute inset-0 rounded-full bg-accent-brand/25 blur-2xl"
+          className="halo absolute -inset-4 rounded-full bg-accent-brand/15 blur-3xl"
+        />
+        <span
+          aria-hidden="true"
+          className="absolute inset-0 rounded-full bg-accent-brand/20 blur-xl"
+        />
+        <span
+          aria-hidden="true"
+          className="absolute inset-[-2px] rounded-2xl ring-1 ring-accent-brand/20"
         />
         <div
           aria-hidden="true"
-          className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-accent-brand/30 bg-gradient-to-br from-accent-brand to-accent-brand/60 text-accent-brand-foreground shadow-lg shadow-accent-brand/25"
+          className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--accent-grad-from),var(--accent-grad-to))] text-accent-brand-foreground shadow-[var(--shadow-elev-2)] ring-1 ring-inset ring-white/15"
         >
           <Sparkles className="h-7 w-7" />
         </div>
       </div>
       <div className="flex flex-col items-center gap-2 text-center">
-        <h2 className="font-heading text-lg font-semibold tracking-tight">何でも聞いてください</h2>
-        <p className="max-w-md text-sm text-muted-foreground">
+        <h2 className="text-gradient-brand font-heading font-semibold text-[22px] tracking-[-0.02em]">
+          何でも聞いてください
+        </h2>
+        <p className="max-w-md text-[13px] leading-relaxed text-muted-foreground/85">
           質問を入力するだけで、research → reflection → answer のループで Gemini
           が最適な回答を組み立てます。
         </p>
@@ -119,16 +129,20 @@ function EmptyState({ onSampleClick }: { onSampleClick: (q: string) => void }) {
             <button
               type="button"
               onClick={() => onSampleClick(q)}
-              className="group flex w-full items-start gap-2.5 rounded-2xl border border-border/70 bg-gradient-to-br from-card to-card/40 px-4 py-3 text-left text-xs text-muted-foreground shadow-sm transition-all hover:-translate-y-0.5 hover:border-accent-brand/40 hover:from-card hover:to-card hover:text-foreground hover:shadow-md focus-visible:border-accent-brand/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-brand/20"
+              className="group relative flex w-full items-start gap-2.5 overflow-hidden rounded-2xl border border-hairline-strong bg-surface-2 px-4 py-3.5 text-left text-[12.5px] text-muted-foreground shadow-[var(--shadow-elev-1)] transition-all duration-200 hover:-translate-y-[2px] hover:border-transparent hover:bg-surface-1 hover:text-foreground hover:shadow-[var(--shadow-elev-2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-brand/30"
             >
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 rounded-2xl bg-[radial-gradient(80%_120%_at_0%_0%,var(--accent-brand-haze),transparent_60%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+              />
               <Sparkles
                 aria-hidden="true"
-                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-brand/70 group-hover:text-accent-brand"
+                className="relative mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-brand/70 group-hover:text-accent-brand"
               />
-              <span className="line-clamp-2 flex-1 leading-snug">{q}</span>
+              <span className="relative line-clamp-2 flex-1 leading-snug">{q}</span>
               <ArrowUpRight
                 aria-hidden="true"
-                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/50 opacity-0 transition-opacity group-hover:opacity-100"
+                className="relative mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/50 opacity-0 transition-opacity group-hover:opacity-100"
               />
             </button>
           </li>
